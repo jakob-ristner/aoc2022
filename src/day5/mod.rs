@@ -32,13 +32,7 @@ fn get_crates(contents: &str) -> Vec<String> {
     let split: Vec<&str> = contents.split("\n").collect();
 
     for line in split {
-        let initial: String = line
-            .chars()
-            // .filter(|x| x.is_alphanumeric())
-            .map(|c| convert(c))
-            .collect::<Vec<char>>()
-            .iter()
-            .collect();
+        let initial: String = line.chars().collect::<Vec<char>>().iter().collect();
         crates.push(initial);
     }
     let trans = transpose(crates);
@@ -48,14 +42,6 @@ fn get_crates(contents: &str) -> Vec<String> {
 fn get_moves(contents: &str) -> Vec<Move> {
     let split: Vec<&str> = contents.trim().split("\n").collect();
     split.into_iter().map(|x| Move::new(x)).collect()
-}
-
-fn convert(c: char) -> char {
-    match c {
-        '[' => ' ',
-        ']' => ' ',
-        a => a,
-    }
 }
 
 fn transpose(raw_crates: Vec<String>) -> Vec<String> {
