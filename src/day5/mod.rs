@@ -1,7 +1,7 @@
 use std::fs;
 
 pub fn solve() {
-    let (crates, moves) = parse("src/day5/input.txt");
+    let (crates, moves) = parse("src/day5/large.txt");
     let p1 = get_sol(&mut crates.clone(), &moves, true);
     let p2 = get_sol(&mut crates.clone(), &moves, false);
     println!("Part 1: {}\nPart 2: {}", p1, p2);
