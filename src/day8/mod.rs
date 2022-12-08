@@ -59,7 +59,6 @@ fn is_visible(x: usize, y: usize, forest: &Forest) -> bool {
 }
 
 fn scenic_score(x: usize, y: usize, forest: &Forest) -> u32 {
-    let mut score = 1;
     let tree = forest[y][x];
 
     score_segment(&tree, &forest[y][x + 1..forest.len()].to_vec())
