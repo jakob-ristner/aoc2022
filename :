@@ -1,0 +1,76 @@
+use std::fs;
+
+type Forest = Vec<Vec<u32>>;
+
+pub fn solve() {
+    let forest = parse("src/day8/input.txt");
+    let vis = count_visible(&forest);
+}
+
+fn parse(path: &str) -> Forest {
+    let contents = fs::read_to_string(path).unwrap();
+    contents
+        .trim()
+        .split("\n")
+        .map(|line| {
+            line.chars()
+                .map(|c| c.to_digit(10).unwrap())
+                .collect::<Vec<u32>>()
+        })
+        .collect()
+}
+
+fn print(forest: &Forest) {
+    for tree_line in forest {
+        for tree in tree_line {
+            print!("{}", tree);
+        }
+        println!("");
+    }
+}
+
+fn count_visible(forest: &Forest) -> u32 {
+    let mut accum = 0;
+    for y in 0..forest.len() {
+        for x in 0..forest[0].len() {
+            if is_visible(x, y, forest) {
+                accum += 1;
+            }
+        }
+    }
+    accum
+}
+
+fn is_visible(x: usize, y: usize, forest: &Forest) -> bool {
+    let tree = forest[y][x];
+    let vis_right = &forest[y][x + 1..forest.len()].into_iter().all(|t| t < &tree);
+    let vis_left = &forest[y][0..x].into_iter().all(|t| t < &tree);
+    let vis_down = &forest[y + 1..forest.len()].into_iter().all(|t| t[x] < tree);
+    let vis_up = &forest[0..y].into_iter().all(|t| t[x] < tree);
+    return *vis_right || *vis_left || *vis_down || *vis_up;
+}
+
+fn scenic_score(x: usize, y: usize, forest: &Forest) -> u32 {
+    let mut score = 0;
+    let tree = forest[y][x];
+
+    let seg_r = &forest[y][x + 1..forest.len()].to_vec();
+    let seg_l = &forest[y][0..x].to_vec();
+
+    let seg_d: &Vec<u32> = &forest[y + 1..forest.len()].into_iter().map(|t| t[x]).collect();
+    let seg_u = &forest[0..y].into_iter().map(|t| t[x] < tree);
+
+
+    score
+}
+
+fn score_segment(tree: &u32, tree_line: &Vec<u32>) -> u32{
+    let mut score = 0;
+    for t in tree_line {
+        score += 1;
+        if t >= *tree {
+            break;
+        }
+    }
+    score
+}

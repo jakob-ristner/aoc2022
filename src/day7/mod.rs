@@ -12,17 +12,17 @@ pub fn solve() {
     println!("Part 1: {}\nPart 2: {}", p1, p2);
 }
 
-fn part1(fs: &FileSystem) -> usize {
+fn part1(fs: &FileSystem) -> u32 {
     fs.keys()
         .map(|dir| get_size(dir, &fs))
         .filter(|x| *x <= 100000)
         .sum()
 }
 
-fn part2(fs: &FileSystem) -> usize {
+fn part2(fs: &FileSystem) -> u32 {
     let diff = 30000000 - (70000000 - get_size(&vec!["/".to_string()], fs));
 
-    let sizes: Vec<usize> = fs.keys().map(|dir| get_size(dir, &fs)).collect();
+    let sizes: Vec<u32> = fs.keys().map(|dir| get_size(dir, &fs)).collect();
 
     let mut min_viable = sizes.iter().max().unwrap().clone();
     for size in sizes {
@@ -36,7 +36,7 @@ fn part2(fs: &FileSystem) -> usize {
 #[derive(Debug)]
 enum Item {
     Dir { path: Vec<String> },
-    File { size: usize },
+    File { size: u32 },
 }
 
 type FileSystem = HashMap<Vec<String>, Vec<Item>>;
@@ -48,7 +48,7 @@ fn get_file_system(lines: Vec<&str>) -> FileSystem {
     for line in lines {
         let split: Vec<&str> = line.split_whitespace().collect();
 
-        if split[0] == "$" && split[1] == "cd" {
+        if split[1] == "cd" {
             if split[2] == ".." {
                 dir_stack.pop();
             } else {
@@ -63,7 +63,7 @@ fn get_file_system(lines: Vec<&str>) -> FileSystem {
             fs.get_mut(&dir_stack).unwrap().push(Item::Dir { path })
         }
 
-        if split[0].parse::<usize>().is_ok() {
+        if split[0].parse::<u32>().is_ok() {
             fs.get_mut(&dir_stack).unwrap().push(Item::File {
                 size: split[0].parse().unwrap(),
             });
@@ -72,7 +72,7 @@ fn get_file_system(lines: Vec<&str>) -> FileSystem {
     fs
 }
 
-fn get_size(dir: &Vec<String>, fs: &FileSystem) -> usize {
+fn get_size(dir: &Vec<String>, fs: &FileSystem) -> u32 {
     let mut accum = 0;
     for item in fs.get(dir).unwrap() {
         accum += match item {
@@ -80,5 +80,5 @@ fn get_size(dir: &Vec<String>, fs: &FileSystem) -> usize {
             Item::File { size } => *size,
         };
     }
-    return accum;
+    accum
 }
