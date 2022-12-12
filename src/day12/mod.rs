@@ -57,8 +57,12 @@ fn parse(path: &str) -> (Vec<Vec<char>>, Pos, Pos) {
     (char_mat, start, end)
 }
 
-
-fn bfs(graph: &Graph, start: Pos, char_mat: &Vec<Vec<char>>, done: fn(char) -> bool) -> Option<u32> {
+fn bfs(
+    graph: &Graph,
+    start: Pos,
+    char_mat: &Vec<Vec<char>>,
+    done: fn(char) -> bool,
+) -> Option<u32> {
     let mut visited: HashSet<Pos> = HashSet::new();
     let mut next: HashSet<Pos> = HashSet::new();
     for pos in graph.get(&start).unwrap() {
@@ -71,11 +75,14 @@ fn bfs(graph: &Graph, start: Pos, char_mat: &Vec<Vec<char>>, done: fn(char) -> b
         level += 1;
         let mut new_next: HashSet<Pos> = HashSet::new();
         for pos in &next {
+            visited.insert(*pos);
             if done(char_mat[pos.0 as usize][pos.1 as usize]) {
                 return Some(level);
             }
             for npos in graph.get(pos).unwrap() {
-                new_next.insert(*npos);
+                if !visited.contains(&npos) {
+                    new_next.insert(*npos);
+                }
             }
         }
         next = new_next;
