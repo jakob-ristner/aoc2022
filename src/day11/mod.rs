@@ -1,8 +1,7 @@
-use primes::{self, factors};
-use std::{collections::VecDeque, fs, num};
+use std::{collections::VecDeque, fs};
 
 pub fn solve() {
-    let mut monkeys = parse("src/day11/input.txt");
+    let monkeys = parse("src/day11/input.txt");
     let p1 = sim(&mut monkeys.clone(), 20, true);
     let p2 = sim(&mut monkeys.clone(), 10000, false);
     println!("Part 1: {}\nPart 2: {}", p1, p2);
