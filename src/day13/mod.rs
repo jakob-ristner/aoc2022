@@ -1,7 +1,7 @@
-use std::{cmp::Ordering, fs};
+use std::cmp::Ordering;
 
 pub fn solve() {
-    let packet_pairs = parse("src/day13/input.txt");
+    let packet_pairs = parse(include_str!("input.txt"));
     let mut full_packet_list: Vec<Packet> = Vec::new();
 
     let p1 = part1(&packet_pairs);
@@ -72,8 +72,7 @@ enum Packet {
     List(Vec<Packet>),
 }
 
-fn parse(path: &str) -> Vec<(Packet, Packet)> {
-    let contents = fs::read_to_string(path).unwrap();
+fn parse(contents: &str) -> Vec<(Packet, Packet)> {
     let split: Vec<Vec<&str>> = contents
         .trim()
         .split("\n\n")
@@ -93,9 +92,9 @@ fn jump(line: &Vec<char>, index: usize) -> usize {
         }
         if line[i] == ']' {
             accum -= 1;
-            if accum == 0 {
-                return i + 1;
-            }
+        }
+        if accum == 0 {
+            return i + 1;
         }
     }
     panic!("End of list not found");
@@ -112,10 +111,14 @@ fn get_packet(line: &Vec<char>, start: usize) -> Packet {
             }
             ',' => i += 1,
             _ => {
-                let (m, _) = line.iter().enumerate().find(|(p, x)| p > &i && !x.is_numeric()).unwrap();
+                let (m, _) = line
+                    .iter()
+                    .enumerate()
+                    .find(|(p, x)| p > &i && !x.is_numeric())
+                    .unwrap();
                 let value: u32 = line[i..m].iter().collect::<String>().parse().unwrap();
                 i = m;
-                list.push(Packet::Num(value))
+                list.push(Packet::Num(value));
             }
         };
     }
