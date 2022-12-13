@@ -31,7 +31,7 @@ fn part2(trees: &mut Vec<Tree>) -> usize {
     trees
         .iter()
         .enumerate()
-        .filter(|(_, (tree))| tree == &&t1 || tree == &&t2)
+        .filter(|(_, tree)| tree == &&t1 || tree == &&t2)
         .map(|(index, _)| index + 1)
         .product()
 }
@@ -40,77 +40,51 @@ fn part1(trees: &Vec<(Tree, Tree)>) -> usize {
     trees
         .iter()
         .enumerate()
-        .filter(|(_, (left, right))| cmp(left, right).unwrap())
+        .filter(|(_, (left, right))| left.cmp(right) == Ordering::Less)
         .map(|(index, _)| index + 1)
         .sum()
 }
 
-fn cmp(left: &Tree, right: &Tree) -> Option<bool> {
-    match (left, right) {
-        (Tree::Num { value: left_val }, Tree::Num { value: right_val }) => {
-            if left_val == right_val {
-                None
-            } else {
-                Some(left_val < right_val)
-            }
-        }
-        (Tree::List { list }, Tree::Num { value: num }) => cmp(
-            &Tree::List { list: list.clone() },
-            &Tree::List {
-                list: vec![Tree::Num { value: *num }],
-            },
-        ),
-        (Tree::Num { value: num }, Tree::List { list }) => cmp(
-            &Tree::List {
-                list: vec![Tree::Num { value: *num }],
-            },
-            &Tree::List { list: list.clone() },
-        ),
-        (Tree::List { list: left_list }, Tree::List { list: right_list }) => {
-            let left_len = left_list.len();
-            let right_len = right_list.len();
-            let max: usize;
-            if left_len < right_len {
-                max = left_len;
-            } else {
-                max = right_len;
-            }
-
-            for i in 0..max {
-                match cmp(&left_list[i], &right_list[i]) {
-                    None => continue,
-                    Some(val) => return Some(val),
-                };
-            }
-            if right_len == left_len {
-                None
-            } else {
-                Some(left_len < right_len)
-            }
-        }
-    }
-}
 
 impl PartialOrd for Tree {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        match cmp(self, other) {
-            Some(smaller) => match smaller {
-                true => Some(Ordering::Less),
-                false => Some(Ordering::Greater),
-            },
-            None => Some(Ordering::Equal),
-        }
+        Some(self.cmp(other))
     }
 }
 
 impl Ord for Tree {
     fn cmp(&self, other: &Self) -> Ordering {
-        match cmp(self, other) {
-            Some(smaller) => match smaller {
-                true => Ordering::Less,
-                false => Ordering::Greater,
-            },
-            None => Ordering::Equal,
+        match (self, other) {
+            (Tree::Num { value: left_val }, Tree::Num { value: right_val }) => {
+                left_val.cmp(right_val)
+            }
+            (tree, Tree::Num { value: num }) => tree.cmp(&Tree::List {
+                list: vec![Tree::Num { value: *num }],
+            }),
+
+            (Tree::Num { value: num }, tree) => Tree::List {
+                list: vec![Tree::Num { value: *num }],
+            }
+            .cmp(tree),
+
+            (Tree::List { list: left_list }, Tree::List { list: right_list }) => {
+                let left_len = left_list.len();
+                let right_len = right_list.len();
+                let max: usize;
+                if left_len < right_len {
+                    max = left_len;
+                } else {
+                    max = right_len;
+                }
+
+                for i in 0..max {
+                    match left_list[i].cmp(&right_list[i]) {
+                        Ordering::Equal => continue,
+                        ord => return ord,
+                    };
+                }
+                left_len.cmp(&right_len)
+            }
         }
     }
 }
@@ -119,21 +93,6 @@ impl Ord for Tree {
 enum Tree {
     Num { value: u32 },
     List { list: Vec<Tree> },
-}
-
-impl Tree {
-    fn print(&self) {
-        match self {
-            Tree::Num { value } => print!("{},", value),
-            Tree::List { list } => {
-                print!("[");
-                for tree in list {
-                    tree.print();
-                }
-                print!("]");
-            }
-        }
-    }
 }
 
 fn parse(path: &str) -> Vec<(Tree, Tree)> {
