@@ -1,101 +1,78 @@
 use std::{cmp::Ordering, fs};
 
 pub fn solve() {
-    let tree_pairs = parse("src/day13/input.txt");
-    let mut full_tree_list: Vec<Tree> = Vec::new();
+    let packet_pairs = parse("src/day13/input.txt");
+    let mut full_packet_list: Vec<Packet> = Vec::new();
 
-    let p1 = part1(&tree_pairs);
+    let p1 = part1(&packet_pairs);
 
-    for (left, right) in tree_pairs {
-        full_tree_list.push(left);
-        full_tree_list.push(right);
+    for (left, right) in packet_pairs {
+        full_packet_list.push(left);
+        full_packet_list.push(right);
     }
-    let p2 = part2(&mut full_tree_list);
+    let p2 = part2(&mut full_packet_list);
     println!("Part 1: {}\nPart 2: {}", p1, p2);
 }
 
-fn part2(trees: &mut Vec<Tree>) -> usize {
-    let t1 = Tree::List {
-        list: vec![Tree::List {
-            list: vec![Tree::Num { value: 6 }],
-        }],
-    };
-    let t2 = Tree::List {
-        list: vec![Tree::List {
-            list: vec![Tree::Num { value: 2 }],
-        }],
-    };
-    trees.push(t1.clone());
-    trees.push(t2.clone());
-    trees.sort();
-    trees
+fn part2(packets: &mut Vec<Packet>) -> usize {
+    let t1 = Packet::List(vec![Packet::List(vec![Packet::Num(6)])]);
+    let t2 = Packet::List(vec![Packet::List(vec![Packet::Num(2)])]);
+    packets.push(t1.clone());
+    packets.push(t2.clone());
+    packets.sort();
+    packets
         .iter()
         .enumerate()
-        .filter(|(_, tree)| tree == &&t1 || tree == &&t2)
+        .filter(|(_, packet)| packet == &&t1 || packet == &&t2)
         .map(|(index, _)| index + 1)
         .product()
 }
 
-fn part1(trees: &Vec<(Tree, Tree)>) -> usize {
-    trees
+fn part1(packets: &Vec<(Packet, Packet)>) -> usize {
+    packets
         .iter()
         .enumerate()
-        .filter(|(_, (left, right))| left.cmp(right) == Ordering::Less)
+        .filter(|(_, (left, right))| left < right)
         .map(|(index, _)| index + 1)
         .sum()
 }
 
-
-impl PartialOrd for Tree {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+impl PartialOrd for Packet {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl Ord for Tree {
+impl Ord for Packet {
     fn cmp(&self, other: &Self) -> Ordering {
         match (self, other) {
-            (Tree::Num { value: left_val }, Tree::Num { value: right_val }) => {
-                left_val.cmp(right_val)
-            }
-            (tree, Tree::Num { value: num }) => tree.cmp(&Tree::List {
-                list: vec![Tree::Num { value: *num }],
-            }),
-
-            (Tree::Num { value: num }, tree) => Tree::List {
-                list: vec![Tree::Num { value: *num }],
-            }
-            .cmp(tree),
-
-            (Tree::List { list: left_list }, Tree::List { list: right_list }) => {
-                let left_len = left_list.len();
-                let right_len = right_list.len();
-                let max: usize;
-                if left_len < right_len {
-                    max = left_len;
-                } else {
-                    max = right_len;
-                }
-
-                for i in 0..max {
+            (Packet::Num(left_val), Packet::Num(right_val)) => left_val.cmp(right_val),
+            (packet, Packet::Num(num)) => packet.cmp(&Packet::List(vec![Packet::Num(*num)])),
+            (Packet::Num(num), packet) => Packet::List(vec![Packet::Num(*num)]).cmp(packet),
+            (Packet::List(left_list), Packet::List(right_list)) => {
+                for i in 0..*vec![left_list.len(), right_list.len()]
+                    .iter()
+                    .min()
+                    .unwrap()
+                {
                     match left_list[i].cmp(&right_list[i]) {
                         Ordering::Equal => continue,
                         ord => return ord,
                     };
                 }
-                left_len.cmp(&right_len)
+                left_list.len().cmp(&right_list.len())
             }
         }
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum Tree {
-    Num { value: u32 },
-    List { list: Vec<Tree> },
+enum Packet {
+    Num(u32),
+    List(Vec<Packet>),
 }
 
-fn parse(path: &str) -> Vec<(Tree, Tree)> {
+fn parse(path: &str) -> Vec<(Packet, Packet)> {
     let contents = fs::read_to_string(path).unwrap();
     let split: Vec<Vec<&str>> = contents
         .trim()
@@ -124,41 +101,29 @@ fn jump(line: &Vec<char>, index: usize) -> usize {
     panic!("End of list not found");
 }
 
-fn get_tree(line: &Vec<char>, start: usize) -> Tree {
-    let mut list: Vec<Tree> = Vec::new();
+fn get_packet(line: &Vec<char>, start: usize) -> Packet {
+    let mut list: Vec<Packet> = Vec::new();
     let mut i = start;
     while line[i] != ']' {
         match line[i] {
             '[' => {
-                let sub_list = get_tree(line, i + 1);
-                list.push(sub_list);
+                list.push(get_packet(line, i + 1));
                 i = jump(line, i);
-                if i == line.len() {
-                    break;
-                }
             }
             ',' => i += 1,
             _ => {
-                let mut num_raw: Vec<char> = Vec::new();
-                num_raw.push(line[i]);
-                for val in i + 1..line.len() {
-                    if line[val].is_numeric() {
-                        num_raw.push(line[val]);
-                    } else {
-                        i = val;
-                        break;
-                    }
-                }
-                let value: u32 = num_raw.iter().collect::<String>().parse().unwrap();
-                list.push(Tree::Num { value })
+                let (m, _) = line.iter().enumerate().find(|(p, x)| p > &i && !x.is_numeric()).unwrap();
+                let value: u32 = line[i..m].iter().collect::<String>().parse().unwrap();
+                i = m;
+                list.push(Packet::Num(value))
             }
         };
     }
-    Tree::List { list }
+    Packet::List(list)
 }
 
-fn from_raw_pair(pair_raw: Vec<&str>) -> (Tree, Tree) {
+fn from_raw_pair(pair_raw: Vec<&str>) -> (Packet, Packet) {
     let c1: Vec<char> = pair_raw[0].chars().collect();
     let c2: Vec<char> = pair_raw[1].chars().collect();
-    (get_tree(&c1, 1), get_tree(&c2, 1))
+    (get_packet(&c1, 1), get_packet(&c2, 1))
 }
