@@ -2,7 +2,6 @@ use std::char;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fs;
-use std::sync::mpsc::channel;
 
 pub fn solve() {
     let (char_mat, start, end) = parse("src/day12/input.txt");
@@ -31,7 +30,6 @@ fn cmp_p2(from: i32, to: i32) -> bool {
 
 type Pos = (i32, i32);
 type Graph = HashMap<Pos, Vec<Pos>>;
-type CharMap = HashMap<Pos, char>;
 
 fn parse(path: &str) -> (Vec<Vec<char>>, Pos, Pos) {
     let contents = fs::read_to_string(path).unwrap();
