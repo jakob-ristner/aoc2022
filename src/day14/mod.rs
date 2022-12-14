@@ -7,19 +7,26 @@ pub fn solve() {
     println!("Part 1: {}", p1);
     let p2 = iterate_sand(&mut rocks.clone(), bottom, 2);
     println!("Part 2: {}", p2);
-
 }
 
 type Pos = (usize, usize);
 
 fn iterate_sand(rocks: &mut HashSet<Pos>, lower_bound: usize, part: u32) -> u32 {
     let mut accum = 0;
+    let mut start = (500, 0);
+    let mut path: Vec<Pos> = Vec::new();
+    path.push(start);
     loop {
         accum += 1;
-        match sand_fall(rocks, lower_bound, part) {
-            Some(pos) => {
+        let positions = sand_fall(rocks, lower_bound, part, &mut path);
+        match positions {
+            Some((pos, positions)) => {
                 rocks.insert(pos);
+                path = positions;
+                path.pop();
+                // dbg!(start);
             }
+
             None => return accum - (part % 2), // lol
         }
     }
@@ -33,8 +40,13 @@ fn is_floor(lower_bound: usize, pos: &Pos) -> bool {
     pos.1 == lower_bound + 2
 }
 
-fn sand_fall(rocks: &HashSet<Pos>, lower_bound: usize, part: u32) -> Option<Pos> {
-    let (mut x, mut y) = (500, 0);
+fn sand_fall(
+    rocks: &HashSet<Pos>,
+    lower_bound: usize,
+    part: u32,
+    path: &mut Vec<Pos>,
+) -> Option<(Pos, Vec<Pos>)> {
+    let (mut x, mut y) = path.pop().unwrap_or((500, 0));
 
     loop {
         let left = (x - 1, y + 1);
@@ -53,15 +65,18 @@ fn sand_fall(rocks: &HashSet<Pos>, lower_bound: usize, part: u32) -> Option<Pos>
                     if (x, y) == (500, 0) && part == 2 {
                         return None;
                     }
-                    return Some((x, y));
+                    return Some(((x, y), path.to_vec()));
                 } else {
                     (x, y) = (x + 1, y + 1);
+                    path.push((x, y));
                 }
             } else {
-                (x, y) = (x - 1, y + 1)
+                (x, y) = (x - 1, y + 1);
+                path.push((x, y));
             }
         } else {
             (x, y) = (x, y + 1);
+            path.push((x, y));
         }
     }
 }
